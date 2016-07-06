@@ -1,0 +1,24 @@
+{
+  "name": "chiptopia_leaderboard",
+  "version": "0.0.1",
+  "authors": [
+    "Nik"
+  ],
+  "description": "Basic leaderboard for Chiptopia",
+  "main": "app.rb",
+  "keywords": [
+    "chiptopia"
+  ],
+  "license": "MIT",
+  "private": true,
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "jquery-stupid-table": "~1.0.1"
+  }
+}

@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Chiptopia Leaderboard</title>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+  <script src="//cdn.jsdelivr.net/emojione/2.2.5/lib/js/emojione.min.js"></script>
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/emojione/2.2.5/assets/css/emojione.min.css"/>
+  <script src="stupidtable.min.js"></script>
+  <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous">
+  <style>
+    body {
+      margin: 20px;
+    }
+    #leaderboard {
+      width: 300px;
+    }
+    th#peppers {
+      min-width: 100px;
+    }
+    @media only screen and (max-width: 1080px) {
+      body {
+        font-size: 3em;
+        margin: 20px 10px 20px 10px;
+      }
+      h3 {
+        font-size: 1.5em;
+        text-align: center;
+      }
+      #leaderboard {
+        width: 100%;
+        margin: 0px;
+      }
+    }
+  </style>
+  <script>
+    var pepper = ":hot_pepper:"
+    $.get('./users').then(function(users){
+      var promises = []
+      users.forEach(function(user) {
+        var promise = $.get('/chip-status/' + encodeURI(user)).then(function(score){
+          var pepperText;
+          var pepperCnt = 0;
+          if(score.count >= 11) {
+            pepperCnt = 3;
+          } else if(score.count >= 8) {
+            pepperCnt = 2;
+          } else if(score.count >= 4) {
+            pepperCnt = 1;
+          }
+          pepperText =  emojione.shortnameToImage(pepper.repeat(pepperCnt));
+          $("#leaderboard tbody").append("<tr><td>" + emojione.shortnameToImage(user) + "</td><td>" + score.count + "</td><td>" + pepperText + "</td></tr>");
+          $("table#leaderboard").stupidtable();
+          $("th#score").stupidsort('desc');
+        });
+      });
+    });
+
+  </script>
+</head>
+<body>
+<h3>Chiptopia!!!11™ Leaderboard</h3>
+<table id="leaderboard" class="table">
+  <thead><tr><th data-sort="string">Name</th><th id="score" data-sort="int" data-sort-default="desc">Score</th><th id="peppers"></th></tr></thead>
+  <tbody>
+  </tbody>
+</table>
+</body>
+</html>
