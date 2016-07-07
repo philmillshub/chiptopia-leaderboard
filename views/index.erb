@@ -1,12 +1,20 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Chiptopia Leaderboard</title>
+
+  <meta charset="UTF-8" />
+  <title>Chiptopia!!!11™</title>
+
+  <script src="https://fb.me/react-15.2.0.min.js"></script>
+  <script src="https://fb.me/react-dom-15.2.0.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-core/5.8.34/browser.min.js"></script>
+  <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet" integrity="sha384-T8Gy5hrqNKT+hzMclPo118YTQO6cYprQmhrYwIiQ/3axmI1hQomh7Ud2hPOy8SP1" crossorigin="anonymous">
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
   <script src="//cdn.jsdelivr.net/emojione/2.2.5/lib/js/emojione.min.js"></script>
   <link rel="stylesheet" href="//cdn.jsdelivr.net/emojione/2.2.5/assets/css/emojione.min.css"/>
   <script src="stupidtable.min.js"></script>
   <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous">
+
   <style>
     body {
       margin: 20px;
@@ -16,6 +24,9 @@
     }
     th#peppers {
       min-width: 100px;
+    }
+    td.loading {
+      text-align: center;
     }
     @media only screen and (max-width: 1080px) {
       body {
@@ -32,37 +43,89 @@
       }
     }
   </style>
+
   <script>
-    var pepper = ":hot_pepper:"
-    $.get('./users').then(function(users){
-      var promises = []
-      users.forEach(function(user) {
-        var promise = $.get('/chip-status/' + encodeURI(user)).then(function(score){
-          var pepperText;
-          var pepperCnt = 0;
-          if(score.count >= 11) {
-            pepperCnt = 3;
-          } else if(score.count >= 8) {
-            pepperCnt = 2;
-          } else if(score.count >= 4) {
-            pepperCnt = 1;
-          }
-          pepperText =  emojione.shortnameToImage(pepper.repeat(pepperCnt));
-          $("#leaderboard tbody").append("<tr><td>" + emojione.shortnameToImage(user) + "</td><td>" + score.count + "</td><td>" + pepperText + "</td></tr>");
-          $("table#leaderboard").stupidtable();
-          $("th#score").stupidsort('desc');
+    function getUsers(addUserCallback) {
+      var pepper = ":hot_pepper:"
+      $.get('./users').then(function(users){
+        users.forEach(function(user) {
+          $.get('/chip-status/' + encodeURI(user)).then(function(score){
+            var pepperText;
+            var pepperCnt = 0;
+            if(score.count >= 11) {
+              pepperCnt = 3;
+            } else if(score.count >= 8) {
+              pepperCnt = 2;
+            } else if(score.count >= 4) {
+              pepperCnt = 1;
+            }
+            pepperText =  emojione.shortnameToImage(pepper.repeat(pepperCnt));
+            user = {name: emojione.shortnameToImage(user), score: score.count, peppers: pepperText}
+            addUserCallback(user);
+          });
         });
       });
-    });
-
+    }
   </script>
+
 </head>
 <body>
-<h3>Chiptopia!!!11™ Leaderboard</h3>
-<table id="leaderboard" class="table">
-  <thead><tr><th data-sort="string">Name</th><th id="score" data-sort="int" data-sort-default="desc">Score</th><th id="peppers"></th></tr></thead>
-  <tbody>
-  </tbody>
-</table>
+
+  <div id="react-container"></div>
+  <script type="text/babel">
+    var LeaderboardUserList = React.createClass({
+      render: function() {
+        var list;
+        var createRow = function(user) {
+          return  <tr key={user.name}>
+                    <td dangerouslySetInnerHTML={{__html: user.name}}></td>
+                    <td>{user.score}</td>
+                    <td dangerouslySetInnerHTML={{__html: user.peppers}}></td>
+                  </tr>;
+        }
+        if(this.props.users.length > 0) {
+          list = this.props.users.map(createRow);
+        } else {
+          list = <tr><td className="loading" colSpan="100%"><i className="fa fa-refresh fa-spin"></i></td></tr>;
+        }
+        return <tbody>{list}</tbody>
+      }
+    });
+
+    var Leaderboard = React.createClass({
+      addUser: function(user) {
+        var users = this.state.users;
+        users.push(user);
+        users.sort(function(a, b) {
+          return -(a.score - b.score); // Default sort is ascending, reverse to make desc
+        });
+        this.setState({users: users});
+      },
+      getInitialState: function() {
+        getUsers(this.addUser);
+        return {users: []};
+      },
+      componentDidMount: function() {
+        // Probably shouldn't be modifying the dom, but I'm too lazy to rewrite this sorting in React
+        $("table#leaderboard").stupidtable();
+      },
+      render: function() {
+        return (
+          <div>
+            <h3>Chiptopia!!!11™ Leaderboard</h3>
+            <table id="leaderboard" className="table">
+              <thead>
+                <tr><th data-sort="string">Name</th><th id="score" data-sort="int" data-sort-default="desc">Score</th><th id="peppers"></th></tr>
+              </thead>
+              <LeaderboardUserList users={this.state.users} doneLoading={this.state.doneLoading} />
+            </table>
+          </div>
+        );
+      }
+    });
+
+    ReactDOM.render(<Leaderboard />, document.getElementById('react-container'));
+  </script>
+
 </body>
 </html>
