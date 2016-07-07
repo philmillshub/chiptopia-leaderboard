@@ -17,6 +17,9 @@
     th#peppers {
       min-width: 100px;
     }
+    img.pepper {
+      width:22px;
+    }
     @media only screen and (max-width: 1080px) {
       body {
         font-size: 3em;
@@ -33,21 +36,24 @@
     }
   </style>
   <script>
-    var pepper = ":hot_pepper:"
     $.get('./users').then(function(users){
       var promises = []
       users.forEach(function(user) {
         var promise = $.get('/chip-status/' + encodeURI(user)).then(function(score){
-          var pepperText;
-          var pepperCnt = 0;
+          var level = false;
+          var pepperText = '';
+
           if(score.count >= 11) {
-            pepperCnt = 3;
+            level = 'hot';
           } else if(score.count >= 8) {
-            pepperCnt = 2;
+            level = 'medium';
           } else if(score.count >= 4) {
-            pepperCnt = 1;
+            level = 'mild';
           }
-          pepperText =  emojione.shortnameToImage(pepper.repeat(pepperCnt));
+
+          if(level) {
+            pepperText = '<img class="pepper" src="/images/pepper-' + level + '.png" />';
+          }
           $("#leaderboard tbody").append("<tr><td>" + emojione.shortnameToImage(user) + "</td><td>" + score.count + "</td><td>" + pepperText + "</td></tr>");
           $("table#leaderboard").stupidtable();
           $("th#score").stupidsort('desc');
